@@ -1,0 +1,10 @@
+{
+  "main": "session-2.raml",
+  "name": "session-2",
+  "groupId": "9072ca06-a4f9-4fec-b2c1-bed08783e03f",
+  "assetId": "session-2",
+  "version": "1.0.0",
+  "classifier": "raml",
+  "tags": [],
+  "descriptorVersion": "1.0.0"
+}
