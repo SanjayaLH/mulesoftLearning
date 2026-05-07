@@ -1,2 +1,9 @@
 notes:
-========
+======
+Session-2
+Lab:
+Check below scenarios
+1. Wrong resource name
+2. Invalied HTTP method use
+3. Wrong query params
+4. above all together

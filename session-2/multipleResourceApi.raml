@@ -1,0 +1,43 @@
+#%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/3d4949a4-5dd5-4c9b-acfa-44aeae8fc3c9
+title: multipleResourceApi
+
+/search:
+  get:
+    queryParameters:
+      keyword:
+        type: string
+        minLength: 3
+        maxLength: 10
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              {"message": "Result returend successfull"}
+/news:
+  post:
+    queryParameters:
+      country:
+        required: false
+    body:
+      application/json:
+        properties:
+          username:
+            required: true
+            minLength: 5
+            maxLength: 10
+          password:
+            required: true
+            minLength: 6
+            maxLength: 10
+    responses:
+      201:
+        body:
+          application/json:
+            example:
+              {
+                "SL News" : "Breaking News..."
+              }
+
+        
