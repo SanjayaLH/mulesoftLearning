@@ -1,6 +1,8 @@
 #%RAML 1.0
 baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/3d4949a4-5dd5-4c9b-acfa-44aeae8fc3c9
 title: session-2
+types:
+  thisIsADataType: !include schema/newsDataType.raml
 
 /search:
   get:
@@ -13,5 +15,26 @@ title: session-2
       200:
         body:
           application/json:
+            example: !include examples/searchExample.raml
+
+/news:
+  post:
+    queryParameters:
+      country:
+        required: false
+    body:
+      application/json:
+       type: !include schema/newsDataType.raml
+    responses:
+      201:
+        body:
+          application/json:
             example:
-              {"message": "Result returend successfull"}
+              {
+                "SL News" : "Breaking News..."
+              }
+/sportNews:
+  put:
+    body:
+      application/json:
+        type: thisIsADataType []       

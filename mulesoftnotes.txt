@@ -7,3 +7,34 @@ Check below scenarios
 2. Invalied HTTP method use
 3. Wrong query params
 4. above all together
+5. queryparam-country
+	required: true
+6. content type -> text
+7. add multiple methods to the same resource (add POST inside /search )
+	NOTE: can't put this under separeate /search
+	Correct:       Wrong:
+	/search			/search	
+		get:         	get:
+		...         /search	
+		post:       	post:
+		
+8. use saparate files
+			schema == data type
+			
+9. Can use this as well
+	before the resources we can define types to reduce redundancy
+	
+	eg: types : 
+		thisIsAType : !include schema/newsDataType.raml
+			
+			then can add this variable name like below where we want
+			type: thisIsAType
+			
+10. if we want to add an array of data types..
+	eg: type: thisIsAType[]
+	
+Note: If you need to add your design, you have to pulish it.
+		- if you want to give it to QA, go to Exchange->click on API and share the browser url.
+		- onece they click on the summery after viewing the url they can check.
+		
+	to learn more -> https://raml.org
