@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<!-- Configuration for the HTTP Listener on port 8081 -->
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config">
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+
+	<flow name="smart-greeting-flow">
+		<!-- Entry Point -->
+		<http:listener doc:name="Listener" config-ref="HTTP_Listener_config" path="/greet"/>
+		
+		<!-- Logic to determine Adult/Minor status -->
+		<choice doc:name="Choice">
+			<when expression="#[attributes.queryParams.age as Number &gt;= 18]">
+				<set-variable value="Adult" doc:name="Set Status to Adult" variableName="status"/>
+			</when>
+			<otherwise >
+				<set-variable value="Minor" doc:name="Set Status to Minor" variableName="status"/>
+			</otherwise>
+		</choice>
+
+		<!-- Final Transformation to JSON -->
+		<ee:transform doc:name="Build JSON Response">
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "message": "Hello " ++ (attributes.queryParams.name default "Guest") ++ "!",
+  "classification": vars.status,
+  "processedAt": now() as String {format: "yyyy-MM-dd HH:mm:ss"}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
