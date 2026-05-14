@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+	<http:listener-config name="HTTP_Listener_config"
+		doc:name="HTTP Listener config">
+		<http:listener-connection host="0.0.0.0"
+			port="8081" />
+	</http:listener-config>
+
+	<flow name="inventory-filter-flow">
+		<http:listener doc:name="POST /check-inventory"
+			config-ref="HTTP_Listener_config" path="/check-inventory"
+			allowedMethods="POST" />
+
+		<logger level="INFO" doc:name="Logger"
+			message="Incoming Inventory Check: #[payload]" />
+
+		<ee:transform doc:name="Filter Low Stock">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "inventoryStatus": "Checked",
+    /* Added parentheses around the filter block so it returns an array to the map function */
+    "lowStockItems": (payload filter (item) -> item.count < 5) map (item) -> {
+        "itemName": upper(item.part),
+        "remaining": item.count,
+        "alert": "ORDER_IMMEDIATELY"
+    },
+    "totalAlerts": sizeOf(payload filter ($.count < 5))
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
