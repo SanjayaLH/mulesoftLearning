@@ -1,15 +1,18 @@
-Request:
-Method & Path: POST /process-orders
-url: http://localhost:8081/process-orders
-body:
+#Multi-Vendor Order Router#
+### Request:
+####Method & Path: POST /process-orders
+####url: http://localhost:8081/process-orders
+####body:
+```
 [
   {"partId": "LOC-101", "name": "Brake Pad", "priceUSD": 20.00, "quantity": 2},
   {"partId": "IMP-902", "name": "Spark Plug Set", "priceUSD": 45.50, "quantity": 1},
   {"partId": "LOC-204", "name": "Oil Filter", "priceUSD": 12.00, "quantity": 5},
   {"partId": "IMP-551", "name": "Timing Belt", "priceUSD": 110.00, "quantity": 1}
 ]
-
-Response:
+```
+### Response:
+```
 {
 	"metadata": {
 		"timestamp": "2026-05-20T01:50:33Z",
@@ -45,3 +48,4 @@ Response:
 	],
 	"totalOrderValueLKR": 76650
 }
+```
