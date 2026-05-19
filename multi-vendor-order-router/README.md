@@ -1,8 +1,8 @@
-#Multi-Vendor Order Router#
+# Multi-Vendor Order Router #
 ### Request:
-####Method & Path: POST /process-orders
-####url: http://localhost:8081/process-orders
-####body:
+#### Method & Path: POST /process-orders
+#### url: http://localhost:8081/process-orders
+#### body:
 ```
 [
   {"partId": "LOC-101", "name": "Brake Pad", "priceUSD": 20.00, "quantity": 2},
