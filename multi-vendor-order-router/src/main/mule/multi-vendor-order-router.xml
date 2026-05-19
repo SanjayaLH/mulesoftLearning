@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="df3f21b9-e65f-48b0-a505-4087b7d40ed7" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="advanced-order-router-flow">
+		<!-- Exposing the advanced endpoint -->
+		<http:listener doc:name="POST /process-orders" 
+			config-ref="HTTP_Listener_config" 
+			path="/process-orders" 
+			allowedMethods="POST"/>
+			
+		<logger level="INFO" doc:name="Log Batch Size" 
+			message="Processing a new batch of #[sizeOf(payload)] items."/>
+
+		<ee:transform doc:name="Complex Routing &amp; Aggregation">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+
+fun toLKR(usdAmount: Number) = usdAmount * 300
+
+
+var enrichedPayload = payload map (item) -> item ++ {
+    lineTotalLKR: toLKR(item.priceUSD * item.quantity)
+}
+---
+{
+    "metadata": {
+        "timestamp": now() as String {format: "yyyy-MM-dd'T'HH:mm:ss'Z'"},
+        "totalItems": sizeOf(payload)
+    },
+    
+    
+    "localSupplierOrder": enrichedPayload filter ($.partId startsWith "LOC") map (item) -> {
+        "id": item.partId,
+        "description": item.name,
+        "qty": item.quantity,
+        "costLKR": item.lineTotalLKR
+    },
+    
+    
+    "importedSupplierOrder": enrichedPayload filter ($.partId startsWith "IMP") map (item) -> {
+        "id": item.partId,
+        "description": item.name,
+        "qty": item.quantity,
+        "costLKR": item.lineTotalLKR
+    },
+    
+    "totalOrderValueLKR": enrichedPayload.lineTotalLKR reduce ($ + $$) default 0
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
