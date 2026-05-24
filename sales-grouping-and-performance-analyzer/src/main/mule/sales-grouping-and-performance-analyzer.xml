@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config"
+		doc:name="HTTP Listener config"
+		doc:id="41723e12-888c-47bd-a446-662bba1e5df7">
+		<http:listener-connection host="0.0.0.0"
+			port="8081" />
+	</http:listener-config>
+	<flow name="branch-analytics-flow">
+		<http:listener doc:name="POST /analytics/branches"
+			config-ref="HTTP_Listener_config" path="/analytics/branches"
+			allowedMethods="POST" />
+
+		<ee:transform doc:name="Group and Aggregate Analytics">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+
+var groupedData = payload groupBy (item) -> item.branch
+---
+{
+	"reportGeneratedAt": now() as String {format: "yyyy-MM-dd HH:mm:ss"},
+	
+
+	"branchPerformance": groupedData pluck (value, key) -> {
+		"branchName": key,
+		"transactionCount": sizeOf(value),
+		"totalRevenue": sum(value.amount default [])
+	},
+	
+	"globalMetrics": {
+		"totalNetworkRevenue": sum(payload.amount default []),
+		"averageInvoiceValue": avg(payload.amount default [])
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
