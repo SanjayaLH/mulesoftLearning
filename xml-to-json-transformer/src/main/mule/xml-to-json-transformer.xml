@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+<http:listener-config name="HTTP_Listener_config"
+		doc:name="HTTP Listener config"
+		doc:id="39505eab-d2c1-4b96-bdea-643571ff1d87">
+		<http:listener-connection host="0.0.0.0"
+			port="8081" />
+	</http:listener-config>
+	<flow name="legacy-xml-import-flow">
+		<http:listener doc:name="POST /inventory/legacy-import" 
+			config-ref="HTTP_Listener_config" 
+			path="/inventory/legacy-import" 
+			allowedMethods="POST"/>
+
+		<ee:transform doc:name="XML to JSON Flattener">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+//Set the input type expectation to XML and output to JSON
+input payload application/xml
+output application/json
+---
+{
+	"importMetadata": {
+		//Read XML Attributes using the .@ operator
+		"orderReference": payload.order.@id,
+		
+		//Flattening nested child structures directly into simple strings
+		"buyerCompany": payload.order.customer.company,
+		"buyerContact": payload.order.customer.contactInfo.phone
+	},
+	
+	//Map XML repetitions. 
+	//DataWeave safely targets a repeating element list using .*
+	"processedParts": payload.order.partsList.*part map (item) -> {
+		"partSku": item.sku,
+		"name": item.description,
+		"category": item.@`type`, //Escaping 'type' because it's a DW reserved keyword
+		"basePrice": item.cost as Number
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
