@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+<http:listener-config name="HTTP_Listener_config"
+		doc:name="HTTP Listener config"
+		doc:id="b0f59de6-2313-4aa8-a022-844f5aaf0b1f">
+		<http:listener-connection host="0.0.0.0"
+			port="8081" />
+	</http:listener-config>
+	<flow name="catalog-normalization-flow">
+		<http:listener doc:name="POST /catalog/normalize" 
+			config-ref="HTTP_Listener_config" 
+			path="/catalog/normalize" 
+			allowedMethods="POST"/>
+
+		<ee:transform doc:name="Normalize Paginated Data">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+//Assign pagination fields to local variables for cleaner math
+var current = payload.pagination.currentPage
+var perPage = payload.pagination.itemsPerPage
+var totalItems = payload.pagination.totalItems
+
+//Math ceiling implementation using DataWeave's ceil function
+var totalPages = ceil(totalItems / perPage)
+---
+{
+	"syncStatus": "SUCCESS",
+	"navigation": {
+		"activePage": current,
+		"totalPages": totalPages,
+		"hasMorePages": current < totalPages
+	},
+	//Normalizing and transforming the nested array elements
+	"products": payload.records map (item) -> {
+		"partNumber": item.sku,
+		"displayName": item.details.name,
+		"supplierCost": item.details.cost,
+		//Applying 15% VAT and rounding down to the nearest integer
+		"retailPriceLKR": round(item.details.cost * 1.15)
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
